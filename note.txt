@@ -1,0 +1,26 @@
+
+
+------ROUTES
+----ACCOUNT
+1-- login /login
+2-- signUp /signUp
+
+----PRODUCTS
+1 Joggers List  /joggers
+2 ASO-OKE List /asooke
+3 Single products details /products/details
+
+----CART & CHECKOUT
+
+
+
+
+on first load, HOME page 
+GET joggers --- 10 products, 6 will have a tag called latest. get random 3 for best selling. 
+GET Asooke --- 10 products , 6 will have a tag called latest. get random 3 fro best selling.
+
+
+
+
+//
+push to the top =  createdAt minimum - 1;

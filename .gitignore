@@ -1,0 +1,4 @@
+./utility/config.js
+
+.env
+node_modules
