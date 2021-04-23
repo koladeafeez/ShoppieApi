@@ -19,17 +19,19 @@ const app = express();
 
 app.use(cors());
 
-if (process.env.NODE_ENV === "production") {
-  console.log("prod");
-  const db = mongoose.connect;
-  ("mongodb+srv://user1:sifahdais123@cluster0.ajo7k.mongodb.net/test");
-} else {
-  require("dotenv").config();
-  if (process.env.NODE_ENV === "development") {
-    const db = mongoose.connect("mongodb://localhost/Shoppie");
-    console.log("dev");
-  }
-}
+// if (process.env.NODE_ENV === "production") {
+//   console.log("prod");
+const db = mongoose.connect(
+  "mongodb+srv://user1:Sifahdais@cluster0.ajo7k.mongodb.net/Shoppie",
+  { useNewUrlParser: true }
+);
+// } else {
+//   require("dotenv").config();
+//   if (process.env.NODE_ENV === "development") {
+//     const db = mongoose.connect("mongodb://localhost/Shoppie");
+//     console.log("dev");
+//   }
+// }
 
 // console.log(db);
 const connection = mongoose.connection;
@@ -88,6 +90,7 @@ app.get("/all", (req, res) => {
 
 app.get("/test", (req, res) => {
   Jogger.find({}, (err, data) => {
+    console.log(data);
     if (err) res.json(err);
     res.json(data);
   });
