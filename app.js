@@ -86,6 +86,13 @@ app.get("/all", (req, res) => {
   });
 });
 
+app.get("/test", (req, res) => {
+  Jogger.find({}, (err, data) => {
+    if (err) res.json(err);
+    res.json(data);
+  });
+});
+
 app.post("/api/cart", (req, res) => {
   let data = req.body;
 
