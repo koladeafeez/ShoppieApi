@@ -26,8 +26,24 @@ function routes(Jogger, imageModel) {
 
   joggersRouter
     .route("/:id")
-    .get((req, res) => {
-      res.json(req.jogger);
+    .get(async (req, res) => {
+      let jogger = req.jogger;
+      let query = [];
+      jogger.imageId.forEach((id) => {
+        query.push({ _id: id });
+      });
+      let images = await imageModel.find({ $or: query });
+
+      images.forEach((img, i) => {
+        let imgObj = {
+          contentType: img.img.contentType,
+          imgSource: img.img.data.toString("base64"),
+        };
+        jogger.images.push(imgObj);
+      });
+      // promises.push(jogger);
+
+      res.json(jogger);
     })
     .patch((req, res) => {
       const { jogger } = req;

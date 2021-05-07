@@ -27,6 +27,12 @@ function adminController(Jogger, imgModel) {
     });
   }
 
+  async function addJoggerPageImage(req, res) {
+    
+  
+  }
+
+
   return { addJogger };
 }
 

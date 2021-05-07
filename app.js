@@ -19,19 +19,19 @@ const app = express();
 
 app.use(cors());
 
-// if (process.env.NODE_ENV === "production") {
-//   console.log("prod");
-const db = mongoose.connect(
-  "mongodb+srv://user1:Sifahdais@cluster0.ajo7k.mongodb.net/Shoppie",
-  { useNewUrlParser: true }
-);
-// } else {
-//   require("dotenv").config();
-//   if (process.env.NODE_ENV === "development") {
-//     const db = mongoose.connect("mongodb://localhost/Shoppie");
-//     console.log("dev");
-//   }
-// }
+if (process.env.NODE_ENV === "production") {
+  console.log("prod");
+  const db = mongoose.connect(
+    "mongodb+srv://user1:Sifahdais@cluster0.ajo7k.mongodb.net/Shoppie",
+    { useNewUrlParser: true }
+  );
+} else {
+  require("dotenv").config();
+  if (process.env.NODE_ENV === "development") {
+    const db = mongoose.connect("mongodb://localhost/Shoppie");
+    console.log("dev");
+  }
+}
 
 // console.log(db);
 const connection = mongoose.connection;
@@ -51,6 +51,7 @@ const Asooke = require("./models/asookeModel");
 const imgModel = require("./models/imageModel");
 const { Grid } = require("gridfs-stream");
 const imageModel = require("./models/imageModel");
+const { nextTick } = require("process");
 
 const accountRouter = require("./routes/accountRouter")(User);
 const joggerRouter = require("./routes/joggerRouter")(Jogger, imageModel);
@@ -75,15 +76,54 @@ app.use("/api/admin", adminRouter);
 //   });
 // });
 
-app.get("/all", (req, res) => {
+// app.use("/all", async (req, res, next) => {
+//   let value = [];
+
+//   let img = await imgModel.find({});
+//   res.Data = img;
+
+//   console.log("valOut", res.Data);
+//   next();
+// });
+
+// app.get("/all", (req, res) => {
+//   console.log("in next");
+//   // res.value.forEach((data) => {
+//   //   console.log(data);
+//   // });
+//   res.json(res.Data);
+// });
+
+app.use("/all", async (req, res, next) => {
   res.Data = [];
-  Asooke.find({ latest: true }, (err, value) => {
-    if (err) return res.status(500).send("server error");
-    res.Data.push(value);
-    Jogger.find({ latest: true }, (err, value) => {
-      // if (err) res.status(500).send("server error");
-      res.Data.push(value);
-      res.status(200).json(res.Data);
+  let asooke = await Asooke.find({ latest: true });
+  res.Data.push(asooke);
+
+  let joggers = await Jogger.find({ latest: true });
+  res.Data.push(joggers);
+  return next();
+});
+
+app.get("/all", async (req, res) => {
+  console.log("in next");
+
+  res.Data[1].forEach(async (product, j) => {
+    let query = [];
+    product.imageId.forEach((id, i) => {
+      query.push({ _id: id });
+    });
+    new Promise((resolve, reject) => {
+      let images = imageModel.find({ $or: query });
+      resolve(images);
+    }).then((img) => {
+      img.forEach((img, i) => {
+        let imgObj = {
+          contentType: img.img.contentType,
+          imgSource: img.img.data.toString("base64"),
+        };
+        product.images.push(imgObj);
+        if (res.Data[1].length - 1 === j) res.status(200).json(res.Data);
+      });
     });
   });
 });
@@ -96,7 +136,7 @@ app.get("/test", (req, res) => {
   });
 });
 
-app.post("/api/cart", (req, res) => {
+app.post("/api/cart", async (req, res) => {
   let data = req.body;
 
   let joggers = data.filter((el) => el.type === "joggers");
@@ -110,9 +150,37 @@ app.post("/api/cart", (req, res) => {
 
   for (let i = 0; i < loopLength; i++) {
     if (i < joggersLength) {
-      promises.push(Jogger.findById(joggers[i]._id));
+      let jogger = await Jogger.findById(joggers[i]._id);
+      let query = [];
+      jogger.imageId.forEach((id) => {
+        query.push({ _id: id });
+      });
+      let images = await imageModel.find({ $or: query });
+
+      images.forEach((img, i) => {
+        let imgObj = {
+          contentType: img.img.contentType,
+          imgSource: img.img.data.toString("base64"),
+        };
+        jogger.images.push(imgObj);
+      });
+      promises.push(jogger);
     } else {
-      promises.push(Asooke.findById(joggers[i]._id));
+      let asooke = await Asooke.findById(joggers[i]._id);
+      let query = [];
+      asooke.imageId.forEach((id) => {
+        query.push({ _id: id });
+      });
+      let images = await imageModel.find({ $or: query });
+
+      images.forEach((img, i) => {
+        let imgObj = {
+          contentType: img.img.contentType,
+          imgSource: img.img.data.toString("base64"),
+        };
+        asooke.images.push(imgObj);
+      });
+      promises.push(asooke);
     }
   }
 
@@ -126,7 +194,6 @@ app.post("/api/cart", (req, res) => {
         rejectedItems += 1;
       }
     });
-    console.log(fulfilledItems);
     res.status(200).json({ data: fulfilledItems, notFound: rejectedItem });
   });
 });
