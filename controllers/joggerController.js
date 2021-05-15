@@ -4,7 +4,7 @@ const config = require("../utility/config");
 const authenticationMiddleware = require("../routes/authenticateRequest");
 
 function joggersController(Jogger, imageModel) {
-  function get(req, res) {
+  async function get(req, res) {
     const filter = req.query.search;
     const price = req.query.price;
     let query;
@@ -50,44 +50,28 @@ function joggersController(Jogger, imageModel) {
         }
 
         result.results = joggers.slice(startIndex, endIndex);
-        new Promise((resolve, reject) => {
-          result.results.forEach(async (product, i) => {
+
+        new Promise(async (resolve, reject) => {
+          for (let j = 0; j < result.results.length; j++) {
             let query = [];
 
-            product.imageId.forEach((id, i) => {
+            result.results[j].imageId.forEach((id, i) => {
               query.push({ _id: id });
             });
             let images = await imageModel.find({ $or: query });
-            // let images = await imageModel.find(
-            //   { $or: query },
-            //   (error, image) => {
-            //     image.forEach((img, i) => {
-            //       let imgObj = {
-            //         contentType: img.img.contentType,
-            //         imgSource: img.img.data.toString("base64"),
-            //       };
-            //       product.images.push(imgObj);
-            //     });
-            //   }
-            // );
+
             images.forEach((img, i) => {
               let imgObj = {
                 contentType: img.img.contentType,
                 imgSource: img.img.data.toString("base64"),
               };
-              product.images.push(imgObj);
+              result.results[j].images.push(imgObj);
             });
-
-            if (i === result.results.length - 1) resolve(result);
-          });
-        })
-          .then((data) => {
-            console.log(data);
-            res.status(200).json(data);
-          })
-          .catch((error) => {
-            reject(error);
-          });
+          }
+          resolve(result);
+        }).then((data) => {
+          res.json(data);
+        });
       });
     } catch (e) {
       res.json({ message: e.message });

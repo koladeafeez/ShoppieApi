@@ -96,36 +96,40 @@ app.use("/api/admin", adminRouter);
 
 app.use("/all", async (req, res, next) => {
   res.Data = [];
-  let asooke = await Asooke.find({ latest: true });
+  let asooke = await Asooke.find({ inshowcase: true });
   res.Data.push(asooke);
 
-  let joggers = await Jogger.find({ latest: true });
+  let joggers = await Jogger.find({ inshowcase: true });
   res.Data.push(joggers);
   return next();
 });
 
 app.get("/all", async (req, res) => {
-  console.log("in next");
-
-  res.Data[1].forEach(async (product, j) => {
+  let imagesArr = [];
+  for (let i = 0; i < res.Data[1].length; i++) {
     let query = [];
-    product.imageId.forEach((id, i) => {
-      query.push({ _id: id });
+
+    for (let k = 0; k < res.Data[1][i].imageId.length; k++) {
+      query.push({ _id: res.Data[1][i].imageId[k] });
+    }
+
+    console.log("query", query);
+
+    let images = await imageModel.find({ $or: query });
+
+    images.forEach(async (img, j) => {
+      let imgObj = {
+        contentType: img.img.contentType,
+        imgSource: img.img.data.toString("base64"),
+      };
+
+      res.Data[1][i].images.push(imgObj);
+      imagesArr.push(imgObj);
     });
-    new Promise((resolve, reject) => {
-      let images = imageModel.find({ $or: query });
-      resolve(images);
-    }).then((img) => {
-      img.forEach((img, i) => {
-        let imgObj = {
-          contentType: img.img.contentType,
-          imgSource: img.img.data.toString("base64"),
-        };
-        product.images.push(imgObj);
-        if (res.Data[1].length - 1 === j) res.status(200).json(res.Data);
-      });
-    });
-  });
+  }
+
+  console.log(imagesArr.length);
+  res.json(res.Data);
 });
 
 app.get("/test", (req, res) => {

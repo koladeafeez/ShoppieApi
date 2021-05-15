@@ -6,6 +6,9 @@ const joggersModel = new Schema({
     type: String,
     require,
   },
+  producttype: {
+    type: String,
+  },
   price: {
     type: Number,
     require,
@@ -53,8 +56,12 @@ const joggersModel = new Schema({
   },
   latest: {
     type: Boolean,
-    default: false,
+    default: true,
   },
+  inshowcase: {
+    type: Boolean,
+  },
+
   createdAt: { type: Number, default: new Date().getTime() },
   updatedAt: { type: Number, default: new Date().getTime() },
 });
